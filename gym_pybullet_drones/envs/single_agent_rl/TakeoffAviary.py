@@ -16,7 +16,7 @@ class TakeoffAviary(BaseSingleAgentAviary):
                  freq: int=240,
                  aggregate_phy_steps: int=1,
                  gui=False,
-                 record=False, 
+                 record=False,
                  obs: ObservationType=ObservationType.KIN,
                  act: ActionType=ActionType.RPM
                  ):

@@ -44,10 +44,8 @@ from stable_baselines3.sac.policies import SACPolicy as sacMlpPolicy
 from stable_baselines3.sac import CnnPolicy as sacCnnPolicy
 from stable_baselines3.td3 import MlpPolicy as td3ddpgMlpPolicy
 from stable_baselines3.td3 import CnnPolicy as td3ddpgCnnPolicy
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, \
-    StopTrainingOnRewardThreshold, StopTrainingOnNoModelImprovement
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, StopTrainingOnRewardThreshold
 
-from gym_pybullet_drones.envs.single_agent_rl.UpDownAviary import UpDownAviary
 from gym_pybullet_drones.envs.single_agent_rl.TakeoffAviary import TakeoffAviary
 from gym_pybullet_drones.envs.single_agent_rl.HoverAviary import HoverAviary
 from gym_pybullet_drones.envs.single_agent_rl.FlyThruGateAviary import FlyThruGateAviary
@@ -59,13 +57,12 @@ import shared_constants
 EPISODE_REWARD_THRESHOLD = -0 # Upperbound: rewards are always negative, but non-zero
 """float: Reward threshold to halt the script."""
 
-#DEFAULT_ENV = 'hover'
-DEFAULT_ENV = 'updown'
-DEFAULT_ALGO = 'ddpg'   # 'ppo' # choices=['a2c', 'ppo', 'sac', 'td3', 'ddpg']
+DEFAULT_ENV = 'hover'
+DEFAULT_ALGO = 'ppo'
 DEFAULT_OBS = ObservationType('kin')
-DEFAULT_ACT = ActionType('pid') # ActionType('one_d_rpm')
+DEFAULT_ACT = ActionType('one_d_rpm')
 DEFAULT_CPU = 1
-DEFAULT_STEPS = 20000   # 50000 #   # 1500000 #1000000 4hrs #35000
+DEFAULT_STEPS = 35000
 DEFAULT_OUTPUT_FOLDER = 'results'
 
 def run(
@@ -95,7 +92,7 @@ def run(
     if act == ActionType.ONE_D_RPM or act == ActionType.ONE_D_DYN or act == ActionType.ONE_D_PID:
         print("\n\n\n[WARNING] Simplified 1D problem for debugging purposes\n\n\n")
     #### Errors ################################################
-        if not env in ['takeoff', 'hover', 'updown']:
+        if not env in ['takeoff', 'hover']: 
             print("[ERROR] 1D action space is only compatible with Takeoff and HoverAviary")
             exit()
     if act == ActionType.TUN and env != 'tune' :
@@ -119,12 +116,6 @@ def run(
                                  )
     if env_name == "hover-aviary-v0":
         train_env = make_vec_env(HoverAviary,
-                                 env_kwargs=sa_env_kwargs,
-                                 n_envs=cpu,
-                                 seed=0
-                                 )
-    if env_name == "updown-aviary-v0":
-        train_env = make_vec_env(UpDownAviary,
                                  env_kwargs=sa_env_kwargs,
                                  n_envs=cpu,
                                  seed=0
@@ -235,12 +226,6 @@ def run(
                                     n_envs=1,
                                     seed=0
                                     )
-        if env_name == "updown-aviary-v0":
-            eval_env = make_vec_env(UpDownAviary,
-                                    env_kwargs=sa_env_kwargs,
-                                    n_envs=1,
-                                    seed=0
-                                    )
         if env_name == "flythrugate-aviary-v0": 
             eval_env = make_vec_env(FlyThruGateAviary,
                                     env_kwargs=sa_env_kwargs,
@@ -260,11 +245,8 @@ def run(
     callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=EPISODE_REWARD_THRESHOLD,
                                                      verbose=1
                                                      )
-    callback_on_improvement = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5)
-
     eval_callback = EvalCallback(eval_env,
-                                 callback_on_new_best=callback_on_improvement,
-                                 #callback_on_new_best=callback_on_best,
+                                 callback_on_new_best=callback_on_best,
                                  verbose=1,
                                  best_model_save_path=filename+'/',
                                  log_path=filename+'/',
@@ -290,8 +272,7 @@ def run(
 if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Single agent reinforcement learning experiments script')
-    #parser.add_argument('--env',        default=DEFAULT_ENV,      type=str,             choices=['updown', 'takeoff', 'hover', 'flythrugate', 'tune'], help='Task (default: hover)', metavar='')
-    parser.add_argument('--env',        default=DEFAULT_ENV,      type=str,             choices=['updown', 'takeoff', 'hover', 'flythrugate', 'tune'], help='Task (default: updown)', metavar='')
+    parser.add_argument('--env',        default=DEFAULT_ENV,      type=str,             choices=['takeoff', 'hover', 'flythrugate', 'tune'], help='Task (default: hover)', metavar='')
     parser.add_argument('--algo',       default=DEFAULT_ALGO,        type=str,             choices=['a2c', 'ppo', 'sac', 'td3', 'ddpg'],        help='RL agent (default: ppo)', metavar='')
     parser.add_argument('--obs',        default=DEFAULT_OBS,        type=ObservationType,                                                      help='Observation space (default: kin)', metavar='')
     parser.add_argument('--act',        default=DEFAULT_ACT,  type=ActionType,                                                           help='Action space (default: one_d_rpm)', metavar='')
